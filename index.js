@@ -14,7 +14,8 @@ var escapeHtml = require('escape-html');
 var merge = require('utils-merge');
 var parseurl = require('parseurl');
 var resolve = require('path').resolve;
-var send = require('send');
+var send = require('send-maxired');
+var zipfs = require('zipfs');
 var url = require('url');
 
 /**
@@ -34,7 +35,7 @@ exports = module.exports = function serveStatic(root, options) {
   }
 
   // copy options object
-  options = merge({}, options)
+  options = merge({ fs : zipfs }, options)
 
   // resolve root to absolute
   root = resolve(root)
