@@ -14,8 +14,11 @@ var escapeHtml = require('escape-html');
 var merge = require('utils-merge');
 var parseurl = require('parseurl');
 var resolve = require('path').resolve;
-var send = require('send-maxired');
+
+var proxyquire = require('proxyquire');
 var zipfs = require('zipfs');
+
+var send = proxyquire('send',  { fs : zipfs , '@global':true} );
 var url = require('url');
 
 /**
@@ -35,7 +38,7 @@ exports = module.exports = function serveStatic(root, options) {
   }
 
   // copy options object
-  options = merge({ fs : zipfs }, options)
+  options = merge({}, options)
 
   // resolve root to absolute
   root = resolve(root)
@@ -65,14 +68,17 @@ exports = module.exports = function serveStatic(root, options) {
     var path = parseurl(req).pathname
     var hasTrailingSlash = originalUrl.pathname[originalUrl.pathname.length - 1] === '/'
 
+    var stream;
     if (path === '/' && !hasTrailingSlash) {
       // make sure redirect occurs at mount
-      path = ''
-    }
-
+      path = '';
+      stream = new (require('events')).EventEmitter();
+      stream.pipe = new Function();
+      process.nextTick( function(){ stream.emit('directory');});
+    }else{
     // create send stream
-    var stream = send(req, path, opts)
-
+      stream = send(req, path, opts)
+    }
     if (redirect) {
       // redirect relative to originalUrl
       stream.on('directory', function redirect() {
